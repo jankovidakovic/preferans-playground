@@ -1,20 +1,6 @@
 import random
-from dataclasses import dataclass
-from typing import Literal
 
-Card = int
-Igra = Literal["Pik", "Karo", "Herc", "Tref", "Betl", "Sanac", "Preferans"]
-Player = int
-Licitacija = list[tuple[Player, Igra | None]]
-
-Hand = list[Card]
-Game = tuple[Hand, Hand, Hand]
-Move = tuple[Hand, Card]
-
-Stih = tuple[Card, Card, Card]
-
-Bodovi = list[int]
-Juhe = list[int]
+from pref.types import *
 
 
 def sljedeci(igrac: Player) -> Player:
@@ -81,24 +67,6 @@ def jesu_pratioci_pali(osvojeni_stihovi: tuple[int, int]) -> tuple[bool, bool]:
 
 def kolko_igra_vrijedi(igra: Igra) -> int:
     return 8  # mos mislit
-
-
-@dataclass
-class Round:
-    lic: Licitacija
-    izvodjac: Player
-    igra: Igra
-    tko_igra: tuple[bool, bool, bool]
-    stihovi: list[tuple[Card, Card, Card]]
-    pobjednici_stihova: list[int]
-    osvojeni_stihovi: list[int]
-    bodovi: list[int]
-    juhe: list[int]
-
-
-Stihovi = list[Stih]
-PobjedniciStihova = list[int]
-OsvojeniStihovi = list[int]
 
 
 def igranje_stihova(
@@ -270,5 +238,3 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
     ]
 
     return scores
-
-
