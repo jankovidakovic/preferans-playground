@@ -191,7 +191,8 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
     bodovi = [starting_points, starting_points, starting_points]
     juhe = [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
 
-    prvi_na_stihu = random.randint(0, 3)
+    prvi_na_stihu = random.randint(0, 2)
+    print(prvi_na_stihu)
 
     round_num = 0
 
@@ -199,7 +200,7 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
         round_num += 1
         print(f"Round {round_num}")
         cards = random_32_cards()
-        players = [cards[:10], cards[11:20], cards[21:30]]
+        players = [cards[:10], cards[10:20], cards[20:30]]
 
         round = play_round(players, prvi_na_stihu, cards[30:32])
 
@@ -217,6 +218,8 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
         juhe[sljedeci(sljedeci(round.izvodjac))][round.izvodjac] = round.juhe[
             sljedeci(sljedeci(round.izvodjac))
         ]
+
+        prvi_na_stihu = sljedeci(prvi_na_stihu)
 
     scores = [
         bodovi[0] * 10 - juhe[0][1] - juhe[0][2] + juhe[1][0] + juhe[2][0],
