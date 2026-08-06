@@ -2,6 +2,9 @@ from dataclasses import dataclass
 from typing import Literal
 
 Card = int
+Suit = Literal["Pik", "Karo", "Herc", "Tref"]
+
+# we really need this to be ord tho
 Igra = Literal["Pik", "Karo", "Herc", "Tref", "Betl", "Sanac", "Preferans"]
 Player = int
 Licitacija = list[tuple[Player, Igra | None]]

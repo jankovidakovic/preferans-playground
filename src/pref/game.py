@@ -1,10 +1,9 @@
 import random
 
+from pref.licitiranje import licitiranje, pobjednik_lic, zovi_na_6
+from pref.stihovi import analiziraj_ruku
 from pref.types import *
-
-
-def sljedeci(igrac: Player) -> Player:
-    return (igrac + 1) % 3
+from pref.utils import sljedeci
 
 
 def get_stih(stih: Stih, igra: Igra) -> Player:
@@ -16,21 +15,16 @@ def make_move(hand: Hand, current_move_cards: list[Card]) -> Card:
     return hand[0]  # uvijek igra prvu kartu
 
 
-def licitiranje(igraci: list[Hand], prvi_na_stihu: Player) -> Licitacija:
-    return [(0, None), (1, None), (2, None)]  # refa
-
-
-def pobjednik_lic(lic: Licitacija) -> Player:
-    return 1
-
-
 def odbaci_talon(igrac: Hand) -> tuple[Hand, list[Card]]:
     # odbaci zadnje dvije karte
     return igrac[:10], [igrac[10], igrac[11]]
 
 
 def zvanje(igrac: Hand, lic: Licitacija, odbaceni_talon: list[Card]) -> Igra:
-    return "Herc"  # whatever
+    sta_zove = zovi_na_6(igrac)
+    if sta_zove is None:
+        raise RuntimeError("pobjednik licitacije ne zeli zvat, kinda sus")
+    return sta_zove
 
 
 def odredi_jel_igraju(
@@ -154,8 +148,10 @@ def play_round(
     igraci: list[Hand], prvi_na_stihu: Player, talon: list[Card]
 ) -> Round | None:
     lic = licitiranje(igraci, prvi_na_stihu)
-    if lic == [(0, None), (1, None), (2, None)]:
+    if lic is None:
         return None  # refa
+
+    print(lic)
 
     izvodjac = pobjednik_lic(lic)
     igraci[izvodjac].extend(talon)  # uzme talon
@@ -171,16 +167,6 @@ def play_round(
     )
 
     bodovi, juhe = bodovanje(igra, izvodjac, tko_igra, osvojeni_stihovi)
-
-    # lic: Licitacija
-    # izvodjac: Player
-    # igra: Igra
-    # jel_igraju: list[bool]
-    # stihovi: list[tuple[Card, Card, Card]]
-    # pobjednici_stihova: list[int]
-    # osvojeni_stihovi: tuple[int, int, int]
-    # bodovi: tuple[int, int, int]
-    # juhe: tuple[int, int, int]
 
     return Round(
         lic,
@@ -214,6 +200,12 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
         print(f"Round {round_num}")
         cards = random_32_cards()
         players = [cards[:10], cards[11:20], cards[21:30]]
+
+        hand_analysis = [analiziraj_ruku(ruka) for ruka in players]
+        for i in range(3):
+            print(f"===== PLAYER {i} =====")
+            print(hand_analysis[i])
+
         round = play_round(players, prvi_na_stihu, cards[30:32])
 
         if round is None:

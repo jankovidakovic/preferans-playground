@@ -1,58 +1,10 @@
-from pref.types import Card, Hand, Igra, Literal
-
-Suit = Literal["Pik", "Karo", "Herc", "Tref"]
-
-
-def is_suit(card: Card, suit: Suit) -> bool:
-    match suit:
-        case "Pik":
-            return card < 8
-        case "Karo":
-            return 8 <= card < 16
-        case "Herc":
-            return 16 <= card < 24
-        case "Tref":
-            return 24 <= card < 32
-
-
-def broj_sigurnih_stihova(karte_u_boji: list[Card]) -> int:
-    broj_stihova = 0
-    najjaca_karta = 7
-    for i in sorted(karte_u_boji, reverse=True):
-        if i == najjaca_karta:
-            broj_stihova += 1
-            najjaca_karta -= 1
-        else:
-            break
-    return broj_stihova
-
-
-def get_cards_of_suit(cards: list[Card], suit: Suit) -> list[Card]:
-    match suit:
-        case "Pik":
-            suit_normalization = 0
-        case "Karo":
-            suit_normalization = 8
-        case "Herc":
-            suit_normalization = 16
-        case "Tref":
-            suit_normalization = 24
-
-    return [card - suit_normalization for card in cards if is_suit(card, suit)]
-
-
-def stihovi_u_bojama(hand: Hand) -> dict[Suit, int]:
-    stihovi_u_boji: dict[Suit, int] = {}
-    boje: list[Suit] = ["Pik", "Karo", "Herc", "Tref"]
-    for boja in boje:
-        karte_u_boji = get_cards_of_suit(hand, boja)
-        stihovi_u_boji[boja] = broj_sigurnih_stihova(karte_u_boji)
-
-    return stihovi_u_boji
+from pref.stihovi import stihovi_u_bojama
+from pref.types import Hand, Igra, Licitacija, Player
+from pref.utils import prethodni, sljedeci
 
 
 def zovi_na_6(hand: Hand) -> Igra | None:
-    # TODO: ovo nikad ne zove betl, uvijek zove dalje
+    # TODO: ovo nikad ne zove betl
     sigurni_stihovi = stihovi_u_bojama(hand)
 
     stih_u_svakoj_boji = all(stihovi > 0 for stihovi in sigurni_stihovi.values())
@@ -78,3 +30,105 @@ def zovi_na_6(hand: Hand) -> Igra | None:
     # znaci: imamo 2 stiha u 3 boje
     # za sad cemo rec dalje
     return None
+
+
+def vrijednost_igre(igra: Igra):
+    return {"Pik": 2, "Karo": 3, "Herc": 4, "Tref": 5, "Betl": 6, "Sanac": 7}[igra]
+
+
+def zeli_licitirat(
+    igrac: Player,
+    ciljana_igra: Igra | None,
+    prvi_na_stihu: Player,
+    zadnja_licitacija: int,
+    zadnji_licitirao: Player,
+) -> bool:
+    # ak zeli rec dalje, onda ne moze licitirat
+    if ciljana_igra is None:
+        return False
+    if moze_rec_ja_bi(igrac, prvi_na_stihu, zadnji_licitirao):
+        return vrijednost_igre(ciljana_igra) >= zadnja_licitacija
+    else:
+        return vrijednost_igre(ciljana_igra) > zadnja_licitacija
+
+
+def moze_rec_ja_bi(
+    igrac: Player, prvi_na_stihu: Player, zadnji_licitirao: Player
+) -> bool:
+    # ak smo prvi na stihu, uvijek mozemo
+    if igrac == prvi_na_stihu:
+        return True
+    # ak smo drugi al prethodni igrac je reko dalje, isto mozemo
+    return prethodni(igrac) == prvi_na_stihu and prethodni(igrac) != zadnji_licitirao
+
+
+def licitiranje(igraci: list[Hand], prvi_na_stihu: Player) -> Licitacija | None:
+    # za sad: sve je automatski
+    # za svakog igraca, odredit koja mu je ciljana boja
+    ciljane_igre: list[Igra | None] = [zovi_na_6(igrac) for igrac in igraci]
+
+    redoslijed = [
+        prvi_na_stihu,
+        sljedeci(prvi_na_stihu),
+        sljedeci(sljedeci(prvi_na_stihu)),
+    ]
+
+    licitacije = []
+    rekli_dalje = []
+
+    zadnja_licitacija = 1
+    zadnji_licitirao = -1  # nitko
+    # prvi krug
+    for igrac in redoslijed:
+        if zeli_licitirat(
+            igrac,
+            ciljane_igre[igrac],
+            prvi_na_stihu,
+            zadnja_licitacija,
+            zadnji_licitirao,
+        ):
+            zadnja_licitacija += 1  # prvi krug, nema "ja bi"
+            what_say_you = (igrac, zadnja_licitacija)
+            zadnji_licitirao = igrac
+        else:
+            what_say_you = (igrac, None)  # reko dalje
+            rekli_dalje.append(igrac)
+        licitacije.append(what_say_you)
+
+    if len(rekli_dalje) == 3:
+        return None  # refa
+
+    while len(rekli_dalje) < 2:
+        for igrac in redoslijed:
+            if rekli_dalje[igrac]:
+                continue  # skip
+            if zeli_licitirat(
+                igrac,
+                ciljane_igre[igrac],
+                prvi_na_stihu,
+                zadnja_licitacija,
+                zadnji_licitirao,
+            ):
+                if moze_rec_ja_bi(igrac, prvi_na_stihu, zadnji_licitirao):
+                    what_say_you = (igrac, zadnja_licitacija)  # ja bi
+                else:
+                    # nema ja bi
+                    zadnja_licitacija += 1
+                    what_say_you = (igrac, zadnja_licitacija)
+                zadnji_licitirao = igrac
+            else:
+                what_say_you = (igrac, None)  # dalje
+                if igrac not in rekli_dalje:
+                    rekli_dalje.append(igrac)
+            licitacije.append(what_say_you)
+
+        # zas je ovo tak jebeno komplicirano
+
+    return licitacije
+
+
+def pobjednik_lic(lic: Licitacija) -> Player:
+    for what_say_you in lic[::-1]:
+        if what_say_you[1] is not None:
+            return what_say_you[0]
+    raise RuntimeError("Bila je refa")
