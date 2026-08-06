@@ -38,7 +38,7 @@ def gabula(karte_u_boji: list[Card]) -> bool:
     return 5 in karte_u_boji and 6 in karte_u_boji
 
 
-def analiziraj_boju(karte_u_boji: list[Card]) -> dict[str, int | bool]:
+def analiziraj_boju(karte_u_boji: list[Card]) -> dict[str, list[str] | int | bool]:
     return {
         "karte_u_boji": human_readable_cards_of_suit(karte_u_boji),
         "sigurni_stihovi": broj_sigurnih_stihova(karte_u_boji),
@@ -51,6 +51,7 @@ def analiziraj_boju(karte_u_boji: list[Card]) -> dict[str, int | bool]:
 def analiziraj_ruku(hand: Hand):
     analiza_po_bojama = {}
     for boja in BOJE:
-        analiza = analiziraj_boju(boja)
+        karte_u_boji = get_cards_of_suit(hand, boja)
+        analiza = analiziraj_boju(karte_u_boji)
         analiza_po_bojama[boja] = analiza
     return analiza_po_bojama
