@@ -1,7 +1,6 @@
 import random
 
 from pref.licitiranje import licitiranje, pobjednik_lic, zovi_na_6
-from pref.stihovi import analiziraj_ruku
 from pref.types import *
 from pref.utils import sljedeci
 
@@ -159,6 +158,7 @@ def play_round(
     igraci[izvodjac], odbaceni_talon = odbaci_talon(igraci[izvodjac])
 
     igra = zvanje(igraci[izvodjac], lic, odbaceni_talon)
+    print(f"Igrac {izvodjac} zove {igra}!")
 
     tko_igra = odredi_jel_igraju(igraci, lic, izvodjac, igra, talon, prvi_na_stihu)
 
@@ -200,11 +200,6 @@ def play_game(starting_points: int, max_rounds: int) -> list[int]:
         print(f"Round {round_num}")
         cards = random_32_cards()
         players = [cards[:10], cards[11:20], cards[21:30]]
-
-        hand_analysis = [analiziraj_ruku(ruka) for ruka in players]
-        for i in range(3):
-            print(f"===== PLAYER {i} =====")
-            print(hand_analysis[i])
 
         round = play_round(players, prvi_na_stihu, cards[30:32])
 
