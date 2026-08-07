@@ -1,5 +1,6 @@
 import random
 
+from pref.karte import get_card_suit, najveca_u_boji
 from pref.licitiranje import licitiranje, pobjednik_lic, zovi_na_6
 from pref.types import *
 from pref.utils import sljedeci
@@ -41,8 +42,26 @@ def tko_igra_prvi(prvi_na_stihu: Player, jel_igraju: tuple[bool, bool, bool]) ->
     return 1  # uvijek prvi igra
 
 
-def tko_nosi_stih(stih: tuple[Card, Card, Card], igra: Igra) -> Player:
-    return 1  # uvijek prvi nosi stih
+def sta_je_adut(igra: Igra) -> Suit | None:
+    if igra == "Betl" or igra == "Sanac" or igra == "Preferans":
+        return None
+    return igra
+
+
+def tko_nosi_stih(stih: list[Card], igra: Igra) -> Player:
+    boja_stiha = get_card_suit(stih[0])
+    najjaca_u_boji_stiha = najveca_u_boji(stih, boja_stiha)
+    if najjaca_u_boji_stiha is None:
+        raise RuntimeError("nije nadjena najjaca u boji")
+
+    adut = sta_je_adut(igra)
+    if adut is None:
+        return stih.index(najjaca_u_boji_stiha)
+    else:
+        najjaci_adut = najveca_u_boji(stih, adut)
+        if najjaci_adut is not None:
+            return stih.index(najjaci_adut)
+        return stih.index(najjaca_u_boji_stiha)
 
 
 def jel_izvodjac_proso(osvojeni_stihovi: int, igra: Igra) -> bool:
